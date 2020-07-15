@@ -1,54 +1,74 @@
 """
-A module with a single function that takes the nasdaqtraded.txt downloaded file
+A module with a single function that downloads the nasdaqtraded.txt file
  and pulls out the ticker symbols and re-writes them to a file.  Each symbol
  will be written to a new line.
 
 The web page to go to:
 ftp://ftp.nasdaqtrader.com/SymbolDirectory/
-Now download nasdaqtraded.txt
+File used: nasdaqtraded.txt
 """
-
+from datetime import datetime
+import os
+#Change if desired.
+download_to_filepath = '/tmp'
 #Enter the filepath to the saved nasdaqtraded.txt fileself.
-#example: '/home/user/Desktop/nasdaqtraded.txt'
-nasdaqlisted_filepath = ''
-#Enter the file name as a filepath, with file name and extension.
-#example: '/home/user/Desktop/ticker_list.txt'
-save_to_filepath = ''
+nasdaqlisted_file = '{}/nasdaqtraded.txt'.format(download_to_filepath)
+#Add current date to saved stock list
+today = datetime.now().strftime('%Y-%m-%d')
+#Replace as needed.
+save_to_filepath = '/home/user/Desktop/stock_list_{}.txt'.format(today)
 
-def nasdaq_ftp_sorter(nasdaqlisted_filepath, save_to_filepath):
-    file = open(nasdaqlisted_filepath)
-    new_stock_list = []
+
+def nasdaq_ftp_sorter(download_to_filepath, nasdaqlisted_file,
+    save_to_filepath):
+    #Automatically get nasdaq traded and save to download_to_filepath directory
+    #This invokes bash or sh wget command
+    #Will do anytime this script is run and add new file.
+    #If using tmp, it cleans itself
+    #regularly enough that I'm not concerned.
+    #You could add at end of script to delete it:
+    #os.system('rm {}/nasdaqtraded.txt'.format(download_to_filepath))
+    #Warning, rm is powerfull and if wrong will delete important files!!
+    os.system(
+        'wget -P {} ftp://ftp.nasdaqtrader.com/SymbolDirectory/'
+        'nasdaqtraded.txt'.format(download_to_filepath)
+        )
+    sym_list = []
     counter = 0
-    for each in file:
-        counter +=1
-        #Drop first two characters of line.
-        cut = each[2:]
-        #Stop reading line at |.
-        end = cut.find("|")
-        #Result is the stock symbol.
-        ticker = cut[:end]
-        #Then we take everything after stock symbol and |.
-        next = each[(2+len(ticker)+1):]
-        #Now we're cutting off the end so the ticker description remains.
-        next_end = next.find("|")
-        #Finally, all that remains is ticker description.
-        pnext = next[:next_end]
-        #Filtering out actual stocks, no etfs, class shares, ect.
-        if pnext[-5:] == 'Stock':
-            new_stock_list.append(ticker)
-        elif pnext[-15:] == 'Ordinary Shares':
-            new_stock_list.append(ticker)
-        elif pnext[-13:] == 'Common Shares':
-            new_stock_list.append(ticker)
-    for each in new_stock_list:
-        #cleaning out the strange symbols, and different share classes
-        if '$' not in each and '.' not in each:
-            #appending it to a file
-            with open('{}'.format(save_to_filepath), 'a+') as file:
-                file.write('{}\n'.format(each))
-    print('We evaluated {} traded nasdaq symbols and saved {} symbols to the'
-          ' file after filtering!'.format(counter, len(new_stock_list)))
+    #Open nasdaqtraded.txt file.
+    #Sort out all the symbols from ordinary stocks/shares.
+    with open(nasdaqlisted_file, 'r') as f:
+        for each in f:
+            counter += 1
+            split = each.split('|')
+            ticker = split[1]
+            name = split[2]
+            #Junking class shares, going to lose some data
+            #if you wanted A and B shares.
+            #Honestly the only one I can think of that I care about is BRK-A/B
+            #If you care, fix example:
+            #if '$A' in str(ticker):
+            #    sym_list.append(ticker.replace('$', '-'))
+            #Appends list with STOCK-A
+            if '$' in str(ticker) or '.' in str(ticker):
+                pass
+            elif 'Stock' in str(name):
+                sym_list.append(ticker)
+            elif 'Ordinary Shares' in str(name):
+                sym_list.append(ticker)
+            elif 'Common Shares' in str(name):
+                sym_list.append(ticker)
+            else:
+                pass
+    #Saving symbols to file.
+    for each in sym_list:
+        with open(save_to_filepath, 'a+') as file:
+            file.write('{}\n'.format(each))
+    print(
+        'We evaluated {} traded nasdaq symbols and saved {} symbols to the'
+        ' file after filtering!'.format(counter, len(sym_list)))
 
-#If you don't know what this does, it's unlikely you'll be able to use this.
 if __name__ == '__main__':
-    nasdaq_ftp_sorter(nasdaqlisted_filepath, save_to_filepath)
+    nasdaq_ftp_sorter(
+        download_to_filepath, nasdaqlisted_file, save_to_filepath
+        )
