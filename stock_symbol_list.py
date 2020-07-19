@@ -53,13 +53,14 @@ def nasdaq_ftp_sorter(download_to_filepath, nasdaqlisted_file,
             if '$' in str(ticker) or '.' in str(ticker):
                 pass
             #Nasdaq has a bunch of test symbols, junking those.
-            elif 'test' in str(name):
+            #Also, added .lower() to string, missed this earlier and it matters.
+            if 'test' in str(name.lower()):
                 pass
-            elif 'Stock' in str(name):
+            elif 'stock' in str(name.lower()):
                 sym_list.append(ticker)
-            elif 'Ordinary Shares' in str(name):
+            elif 'ordinary shares' in str(name.lower()):
                 sym_list.append(ticker)
-            elif 'Common Shares' in str(name):
+            elif 'common shares' in str(name.lower()):
                 sym_list.append(ticker)
             else:
                 pass
