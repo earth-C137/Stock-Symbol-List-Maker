@@ -51,11 +51,11 @@ def nasdaq_ftp_sorter(download_to_filepath, nasdaqlisted_file,
             #    sym_list.append(ticker.replace('$', '-'))
             #Appends list with STOCK-A
             if '$' in str(ticker) or '.' in str(ticker):
-                pass
+                continue
             #Nasdaq has a bunch of test symbols, junking those.
             #Also, added .lower() to string, missed this earlier and it matters.
             if 'test' in str(name.lower()):
-                pass
+                continue
             elif 'stock' in str(name.lower()):
                 sym_list.append(ticker)
             elif 'ordinary shares' in str(name.lower()):
